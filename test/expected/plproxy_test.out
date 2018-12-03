@@ -236,7 +236,8 @@ select * from test_types2('types', 4, (2, 'asd'), array[1,2,3]);
         4 | (2,asd)  | {1,2,3}
 (1 row)
 
-select * from test_types2('types', NULL, NULL, NULL);
+-- PG11 returns a NULL, not a struct composed by NULLs, so we adapt it just for the test
+select v_posint, coalesce(v_struct, (NULL, NULL)::struct) as v_struct, arr from test_types2('types', NULL, NULL, NULL);
  v_posint | v_struct | arr 
 ----------+----------+-----
           | (,)      | 

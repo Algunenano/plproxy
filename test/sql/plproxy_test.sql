@@ -141,7 +141,9 @@ create function test_types2(username text, inout v_posint posint, inout v_struct
 as $$ begin return; end; $$ language plpgsql;
 \c regression
 select * from test_types2('types', 4, (2, 'asd'), array[1,2,3]);
-select * from test_types2('types', NULL, NULL, NULL);
+
+-- PG11 returns a NULL, not a struct composed by NULLs, so we adapt it just for the test
+select v_posint, coalesce(v_struct, (NULL, NULL)::struct) as v_struct, arr from test_types2('types', NULL, NULL, NULL);
 
 -- test CONNECT
 create function test_connect1() returns text
