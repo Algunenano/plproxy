@@ -25,6 +25,11 @@
 
 #include "plproxy.h"
 
+/* AclObjectKind was replaced with ObjectType in PG 11 */
+#if PG_VERSION_NUM >= 110000
+#define ACL_KIND_FOREIGN_SERVER OBJECT_FOREIGN_SERVER
+#endif
+
 /* Permanent memory area for cluster info structures */
 static MemoryContext cluster_mem;
 
