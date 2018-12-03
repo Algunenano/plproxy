@@ -1,0 +1,40 @@
+dist: xenial
+language: c
+sudo: required
+
+env:
+  global:
+    - CFLAGS="-g -O2 -fstack-protector -Wformat -Werror=format-security" LDFLAGS="-Wl,-Bsymbolic-functions -Wl,-z,relro"
+    - MAKEFLAGS="-j 2"
+    - PGUSER=postgres
+    - PGDATABASE=postgres
+    - PGPORT=5432
+
+  matrix:
+    - POSTGRESQL_VERSION="9.2"
+    - POSTGRESQL_VERSION="9.3"
+    - POSTGRESQL_VERSION="9.4"
+    - POSTGRESQL_VERSION="9.5"
+    - POSTGRESQL_VERSION="9.6"
+    - POSTGRESQL_VERSION="10"
+    - POSTGRESQL_VERSION="11"
+
+
+before_install:
+  - sudo service postgresql stop;
+  - sudo apt-get remove postgresql* -y
+  - sudo apt-get install -y --allow-unauthenticated --no-install-recommends --no-install-suggests postgresql-$POSTGRESQL_VERSION postgresql-client-$POSTGRESQL_VERSION postgresql-server-dev-$POSTGRESQL_VERSION postgresql-common
+  - sudo pg_dropcluster --stop $POSTGRESQL_VERSION main
+  - sudo rm -rf /etc/postgresql/$POSTGRESQL_VERSION /var/lib/postgresql/$POSTGRESQL_VERSION
+  - sudo pg_createcluster -u postgres --locale C $POSTGRESQL_VERSION main -- -A trust
+  - sudo /etc/init.d/postgresql start $POSTGRESQL_VERSION || sudo journalctl -xe
+
+script:
+  - make
+  - sudo make install
+  - make installcheck
+
+after_failure:
+  - pg_lsclusters
+  - cat regression.out
+  - cat regression.diffs
