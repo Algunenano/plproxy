@@ -26,6 +26,14 @@
 
 #include "plproxy.h"
 
+/*
+ * heap_attisnull was modified in PG11 and gained a 3rd argument
+ * It behaves the same way when set to NULL
+ */
+#if PG_VERSION_NUM < 110000
+#define heap_attisnull(tup, attnum, tupleDesc) \
+	heap_attisnull((tup), (attnum))
+#endif
 
 /*
  * Function cache entry.
@@ -214,8 +222,8 @@ fn_returns_dynamic_record(HeapTuple proc_tuple)
 	Form_pg_proc proc_struct;
 	proc_struct = (Form_pg_proc) GETSTRUCT(proc_tuple);
 	if (proc_struct->prorettype == RECORDOID
-		&& (heap_attisnull(proc_tuple, Anum_pg_proc_proargmodes)
-		    || heap_attisnull(proc_tuple, Anum_pg_proc_proargnames)))
+		&& (heap_attisnull(proc_tuple, Anum_pg_proc_proargmodes, NULL)
+		    || heap_attisnull(proc_tuple, Anum_pg_proc_proargnames, NULL)))
 		return true;
 	return false;
 }
